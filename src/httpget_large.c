@@ -25,6 +25,7 @@
 const char CONTENT_LENGTH_HEADER[16] = "Content-Length: ";
 
 int getContentLength(char[]);
+int getHeaderLength(char[]);
 
 /****************************************************************************
  Function:		main
@@ -68,18 +69,20 @@ int main(int argc, char **argv)
   recv(connSocket, &szGetResponse, sizeof(szGetResponse), 0);
   printf("recv()\n");
 
-  printf("%s\n\n", szGetResponse);
-
   contentLength = getContentLength(szGetResponse);
-  printf("%d\n\n", contentLength);
+  contentLength += getHeaderLength(szGetResponse);
+
+  printf("%d", contentLength);
 
   while (bytesRead < contentLength)
   {
-    memset(szGetRequest, '\0', strlen(szGetRequest));
+    memset(szGetRequest, '\0', sizeof(szGetResponse));
     recv(connSocket, &szGetResponse, sizeof(szGetResponse), 0);
     printf("recv()\n");
-    bytesRead += 3000;
+    bytesRead += strlen(szGetResponse);
   }
+
+  printf("\n\nTotal Bytes Read: %d\n\n", bytesRead);
 
   close(connSocket);
 
@@ -125,4 +128,29 @@ int getContentLength(char response[])
   *pEnd = tempChar;
 
   return contentLength;
+}
+/****************************************************************************
+ Function:		
+ 
+ Description:	
+ 
+ Parameters:	
+ 
+ Returned:		
+****************************************************************************/
+int getHeaderLength(char response[])
+{
+  char* pStr, *tempPtr;
+  int count = 0;
+  pStr = strstr(response, "\r\n\r\n");
+
+  tempPtr = &response[0];
+
+  while(tempPtr != pStr)
+  {
+    tempPtr++;
+    count++;
+  }
+
+  return count;
 }
