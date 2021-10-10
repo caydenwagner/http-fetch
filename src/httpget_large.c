@@ -48,42 +48,55 @@ int main(int argc, char **argv)
 
   struct sockaddr_in sConnAddr;
 
-  szGetRequest[0] = '\0';
-  
-  strncat(szGetRequest, "GET ", (MAX_SIZE - strlen(szGetRequest)) - 1 );
-  strncat(szGetRequest, argv[2], (MAX_SIZE - strlen(szGetRequest)) - 1 );
-  strncat(szGetRequest, " HTTP/1.1\r\nHost: ", (MAX_SIZE - strlen(szGetRequest)) - 1 );
-  strncat(szGetRequest, argv[1], (MAX_SIZE - strlen(szGetRequest)) - 1 );
-  strncat(szGetRequest, "\r\nConnection: keep-alive\r\n\r\n", (MAX_SIZE - strlen(szGetRequest)) - 1 );
-
-  printf(">|%s<|\n\n", szGetRequest);
-
   connSocket = socket(AF_INET, SOCK_STREAM, 0);
   sConnAddr.sin_family = AF_INET;
   sConnAddr.sin_port = htons(HTTP_PORT);
   inet_aton(argv[1], &sConnAddr.sin_addr);
+  if (-1 == connSocket)
+  {
+     perror("socket failed!\n");
+     return -1;
+  }
   
   connect(connSocket, (struct sockaddr *) &sConnAddr, sizeof(sConnAddr));
 
-  send(connSocket, szGetRequest, strlen(szGetRequest), 0);
-  recv(connSocket, &szGetResponse, sizeof(szGetResponse), 0);
-  printf("recv()\n");
-
-  contentLength = getContentLength(szGetResponse);
-  contentLength += getHeaderLength(szGetResponse);
-
-  printf("%d", contentLength);
-
-  while (bytesRead < contentLength)
+  for(int i = 2; i < argc; i++)
   {
-    memset(szGetRequest, '\0', sizeof(szGetResponse));
-    recv(connSocket, &szGetResponse, sizeof(szGetResponse), 0);
+    memset(szGetRequest, '\0', sizeof(szGetRequest));
+    memset(szGetResponse, '\0', sizeof(szGetResponse));
+    bytesRead = 0;
+
+    strncat(szGetRequest, "GET ", (MAX_SIZE - strlen(szGetRequest)) - 1 );
+    strncat(szGetRequest, argv[i], (MAX_SIZE - strlen(szGetRequest)) - 1 );
+    strncat(szGetRequest, " HTTP/1.1\r\nHost: ", (MAX_SIZE - strlen(szGetRequest)) - 1 );
+    strncat(szGetRequest, argv[1], (MAX_SIZE - strlen(szGetRequest)) - 1 );
+    strncat(szGetRequest, "\r\nConnection: keep-alive\r\n\r\n", (MAX_SIZE - strlen(szGetRequest)) - 1 );
+
+    printf(">|%s<|\n\n", szGetRequest);
+
+    send(connSocket, szGetRequest, strlen(szGetRequest), 0);
+
+    if ((bytesRead = recv(connSocket, &szGetResponse, sizeof(szGetResponse), 0)) < 0)
+    {
+      perror("recieve failed!\n");
+      return -1;
+    }
+
+    contentLength = getContentLength(szGetResponse);
+    contentLength += getHeaderLength(szGetResponse);
+
     printf("recv()\n");
-    bytesRead += strlen(szGetResponse);
+
+    while (bytesRead < contentLength)
+    {
+      memset(szGetRequest, '\0', sizeof(szGetResponse));
+      bytesRead += recv(connSocket, &szGetResponse, sizeof(szGetResponse), 0);
+
+      printf("recv()\n");
+    }
+
+    printf("\nTotal Bytes Read: %d\n\n", bytesRead);
   }
-
-  printf("\n\nTotal Bytes Read: %d\n\n", bytesRead);
-
   close(connSocket);
 
   return EXIT_SUCCESS; // aspirational
