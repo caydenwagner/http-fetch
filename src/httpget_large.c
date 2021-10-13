@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     strncat(szGetRequest, argv[i], (MAX_SIZE - strlen(szGetRequest)) - 1 );
     strncat(szGetRequest, " HTTP/1.1\r\nHost: ", (MAX_SIZE - strlen(szGetRequest)) - 1 );
     strncat(szGetRequest, argv[1], (MAX_SIZE - strlen(szGetRequest)) - 1 );
-    strncat(szGetRequest, "\r\nConnection: keep-alive\r\n\r\n", (MAX_SIZE - strlen(szGetRequest)) - 1 );
+    strncat(szGetRequest, "\r\nConnection: Keep-Alive\r\n\r\n", (MAX_SIZE - strlen(szGetRequest)) - 1 );
 
     printf(">|%s<|\n\n", szGetRequest);
 
